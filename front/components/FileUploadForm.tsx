@@ -108,9 +108,111 @@ export default function FileUploadForm() {
           <div style={{ marginBottom: '8px' }}>
             <strong>ファイル名:</strong> {result.filename}
           </div>
-          <div>
-            <strong>メッセージ:</strong> {result.message}
+          <div style={{ marginBottom: '8px' }}>
+            <strong>文字コード:</strong> {result.encoding}
           </div>
+          <div style={{ marginBottom: '20px' }}>
+            <strong>レコード数:</strong> {result.count} 件
+          </div>
+
+          {result.records && result.records.length > 0 && (
+            <div style={{ marginTop: '20px' }}>
+              <h4 style={{ marginTop: 0, marginBottom: '12px' }}>レコード一覧</h4>
+              <div style={{ overflowX: 'auto' }}>
+                <table
+                  style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    border: '1px solid #ddd',
+                    fontSize: '14px',
+                  }}
+                >
+                  <thead>
+                    <tr style={{ backgroundColor: '#f5f5f5' }}>
+                      <th
+                        style={{
+                          padding: '10px',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        行番号
+                      </th>
+                      <th
+                        style={{
+                          padding: '10px',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        法人番号
+                      </th>
+                      <th
+                        style={{
+                          padding: '10px',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        名称
+                      </th>
+                      <th
+                        style={{
+                          padding: '10px',
+                          textAlign: 'left',
+                          border: '1px solid #ddd',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        照合ステータス
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.records.map((record, index) => (
+                      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9' }}>
+                        <td
+                          style={{
+                            padding: '10px',
+                            border: '1px solid #ddd',
+                          }}
+                        >
+                          {index + 1}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px',
+                            border: '1px solid #ddd',
+                          }}
+                        >
+                          {record.corp_number || '-'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px',
+                            border: '1px solid #ddd',
+                          }}
+                        >
+                          {record.company_name || '-'}
+                        </td>
+                        <td
+                          style={{
+                            padding: '10px',
+                            border: '1px solid #ddd',
+                          }}
+                        >
+                          {/* 将来、法人番号照合ステータスを表示するための空カラム */}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </form>
