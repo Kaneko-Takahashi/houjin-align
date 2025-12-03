@@ -1,11 +1,15 @@
 # api/app/routes/checks.py
 
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 
 import csv
 
 import io
+
+from ..schemas.corporate import CorporateCheckInput, CorporateCheckResult
+from ..services.corporate_lookup import CorporateLookupService
+from ..core.config import settings
 
 
 router = APIRouter(
@@ -82,3 +86,19 @@ async def upload_corporate_file(file: UploadFile = File(...)):
         "count": len(records),
         "records": records,
     }
+
+
+def get_corporate_lookup_service() -> CorporateLookupService:
+    """CorporateLookupService の依存性注入用関数"""
+    return CorporateLookupService(app_id=settings.houjin_app_id)
+
+
+@router.post("/lookup", response_model=CorporateCheckResult)
+def lookup_corporate(
+    payload: CorporateCheckInput,
+    service: CorporateLookupService = Depends(get_corporate_lookup_service),
+) -> CorporateCheckResult:
+    """
+    単一レコードの「法人番号照合」用エンドポイント（Step B ではダミー動作）。
+    """
+    return service.lookup_by_number(payload)
