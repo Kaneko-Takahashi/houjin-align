@@ -23,6 +23,20 @@ export interface UploadResponse {
   records: CorporateRecord[]
 }
 
+export type CorporateLookupInput = {
+  corporate_number: string
+  name?: string
+}
+
+export type CorporateLookupResult = {
+  corporate_number: string
+  input_name: string | null
+  matched_name: string | null
+  matched_address: string | null
+  status: 'OK' | 'NOT_FOUND' | 'NEED_CHECK'
+  raw_response: unknown
+}
+
 /**
  * 法人情報ファイルをアップロードする
  * @param file アップロードするファイル
@@ -56,6 +70,57 @@ export async function uploadCorporateFile(file: File): Promise<UploadResponse> {
           }
         } catch {
           // JSON解析に失敗した場合は statusText を使用
+          errorMessage = `${errorMessage}: ${response.statusText}`
+        }
+      }
+      
+      throw new Error(errorMessage)
+    }
+
+    return response.json()
+  } catch (error) {
+    // ネットワークエラー（接続拒否など）の処理
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error(
+        `バックエンドサーバーに接続できません。\n` +
+        `サーバーが起動しているか確認してください (${API_BASE_URL})`
+      )
+    }
+    throw error
+  }
+}
+
+/**
+ * 法人番号照合を行う
+ * @param input 照合対象の法人番号と名称
+ * @returns 照合結果
+ */
+export async function lookupCorporate(
+  input: CorporateLookupInput
+): Promise<CorporateLookupResult> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/checks/lookup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    })
+
+    if (!response.ok) {
+      let errorMessage = `照合に失敗しました (${response.status})`
+      
+      if (response.status === 404) {
+        errorMessage = `エンドポイントが見つかりません (404)。バックエンドサーバーが正しく起動しているか、エンドポイントパスを確認してください。`
+      } else if (response.status >= 500) {
+        errorMessage = `サーバーエラーが発生しました (${response.status})。バックエンドサーバーのログを確認してください。`
+      } else {
+        try {
+          const errorData = await response.json()
+          if (errorData.detail) {
+            errorMessage = errorData.detail
+          }
+        } catch {
           errorMessage = `${errorMessage}: ${response.statusText}`
         }
       }
