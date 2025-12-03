@@ -23,10 +23,21 @@ body {
   margin-bottom: 32px;
 }
 
+.header-logo-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.header-logo {
+  flex-shrink: 0;
+}
+
 .header-title {
   font-size: 28px;
   font-weight: 700;
-  margin: 0 0 12px 0;
+  margin: 0;
   color: #1a1a1a;
 }
 
@@ -262,6 +273,15 @@ body {
 @media (max-width: 768px) {
   .container {
     padding: 16px;
+  }
+
+  .header-logo-title {
+    gap: 12px;
+  }
+
+  .header-logo {
+    width: 40px;
+    height: 40px;
   }
 
   .header-title {
