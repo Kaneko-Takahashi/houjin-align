@@ -201,7 +201,7 @@ export default function FileUploadForm() {
 
           {result.records && result.records.length > 0 && (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div className="records-section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#333' }}>
                   レコード一覧
                 </h4>
@@ -212,6 +212,7 @@ export default function FileUploadForm() {
                   className="upload-button"
                   style={{ marginLeft: '16px' }}
                 >
+                  {isChecking && <span className="button-spinner"></span>}
                   {isChecking ? '照合中…' : '法人番号を一括照合'}
                 </button>
               </div>
