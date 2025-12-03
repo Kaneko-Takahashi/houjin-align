@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Houjin Align',
@@ -12,8 +13,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body style={{ margin: 0, padding: '20px', fontFamily: 'system-ui, sans-serif' }}>
-        <main style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <body>
+        <main className="container">
           {children}
         </main>
       </body>

@@ -41,170 +41,85 @@ export default function FileUploadForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="file-input" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-          ファイルを選択:
-        </label>
-        <input
-          id="file-input"
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          onChange={handleFileChange}
-          disabled={isLoading}
-          style={{
-            padding: '8px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            width: '100%',
-            maxWidth: '400px',
-          }}
-        />
+    <>
+      <div className="card">
+        <h2 className="card-title">CSVファイルをアップロード</h2>
+        <p className="card-description">
+          CSV/Excel ファイルを選択してアップロードボタンをクリックしてください。
+        </p>
+        <form onSubmit={handleSubmit}>
+          <div className="file-input-wrapper">
+            <label htmlFor="file-input" className="file-input-label">
+              ファイルを選択:
+            </label>
+            <input
+              id="file-input"
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleFileChange}
+              disabled={isLoading}
+              className="file-input"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={!selectedFile || isLoading}
+            className="upload-button"
+          >
+            {isLoading ? 'アップロード中…' : 'アップロード'}
+          </button>
+
+          {error && (
+            <div className="error-message">
+              <strong>エラー:</strong> {error}
+            </div>
+          )}
+        </form>
       </div>
 
-      <button
-        type="submit"
-        disabled={!selectedFile || isLoading}
-        style={{
-          padding: '10px 20px',
-          backgroundColor: isLoading ? '#ccc' : '#0070f3',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: isLoading ? 'not-allowed' : 'pointer',
-          fontSize: '16px',
-          fontWeight: 'bold',
-        }}
-      >
-        {isLoading ? 'アップロード中…' : 'アップロード'}
-      </button>
-
-      {error && (
-        <div
-          style={{
-            marginTop: '15px',
-            padding: '12px',
-            backgroundColor: '#fee',
-            border: '1px solid #fcc',
-            borderRadius: '4px',
-            color: '#c00',
-          }}
-        >
-          <strong>エラー:</strong> {error}
-        </div>
-      )}
-
       {result && (
-        <div
-          style={{
-            marginTop: '15px',
-            padding: '12px',
-            backgroundColor: '#efe',
-            border: '1px solid #cfc',
-            borderRadius: '4px',
-          }}
-        >
-          <h3 style={{ marginTop: 0, marginBottom: '10px' }}>アップロード成功</h3>
-          <div style={{ marginBottom: '8px' }}>
-            <strong>ファイル名:</strong> {result.filename}
-          </div>
-          <div style={{ marginBottom: '8px' }}>
-            <strong>文字コード:</strong> {result.encoding}
-          </div>
-          <div style={{ marginBottom: '20px' }}>
-            <strong>レコード数:</strong> {result.count} 件
+        <div className="result-card">
+          <h2 className="result-card-title">アップロード結果</h2>
+          
+          <div className="success-message">
+            <div>
+              <h3 className="success-message-title">アップロード成功</h3>
+              <div className="success-info">
+                <strong>ファイル名:</strong> {result.filename}
+              </div>
+              <div className="success-info">
+                <strong>文字コード:</strong> {result.encoding}
+              </div>
+              <div className="success-info">
+                <strong>レコード数:</strong> {result.count} 件
+              </div>
+            </div>
           </div>
 
           {result.records && result.records.length > 0 && (
-            <div style={{ marginTop: '20px' }}>
-              <h4 style={{ marginTop: 0, marginBottom: '12px' }}>レコード一覧</h4>
-              <div style={{ overflowX: 'auto' }}>
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    border: '1px solid #ddd',
-                    fontSize: '14px',
-                  }}
-                >
+            <div>
+              <h4 style={{ marginTop: 0, marginBottom: '16px', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                レコード一覧
+              </h4>
+              <div className="table-wrapper">
+                <table className="table">
                   <thead>
-                    <tr style={{ backgroundColor: '#f5f5f5' }}>
-                      <th
-                        style={{
-                          padding: '10px',
-                          textAlign: 'left',
-                          border: '1px solid #ddd',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        行番号
-                      </th>
-                      <th
-                        style={{
-                          padding: '10px',
-                          textAlign: 'left',
-                          border: '1px solid #ddd',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        法人番号
-                      </th>
-                      <th
-                        style={{
-                          padding: '10px',
-                          textAlign: 'left',
-                          border: '1px solid #ddd',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        名称
-                      </th>
-                      <th
-                        style={{
-                          padding: '10px',
-                          textAlign: 'left',
-                          border: '1px solid #ddd',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        照合ステータス
-                      </th>
+                    <tr>
+                      <th>行番号</th>
+                      <th>法人番号</th>
+                      <th>名称</th>
+                      <th>照合ステータス</th>
                     </tr>
                   </thead>
                   <tbody>
                     {result.records.map((record, index) => (
-                      <tr key={index} style={{ backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9' }}>
-                        <td
-                          style={{
-                            padding: '10px',
-                            border: '1px solid #ddd',
-                          }}
-                        >
-                          {index + 1}
-                        </td>
-                        <td
-                          style={{
-                            padding: '10px',
-                            border: '1px solid #ddd',
-                          }}
-                        >
-                          {record.corp_number || '-'}
-                        </td>
-                        <td
-                          style={{
-                            padding: '10px',
-                            border: '1px solid #ddd',
-                          }}
-                        >
-                          {record.company_name || '-'}
-                        </td>
-                        <td
-                          style={{
-                            padding: '10px',
-                            border: '1px solid #ddd',
-                          }}
-                        >
-                          {/* 将来、法人番号照合ステータスを表示するための空カラム */}
+                      <tr key={index}>
+                        <td>{index + 1}</td>
+                        <td>{record.corp_number || '-'}</td>
+                        <td>{record.company_name || '-'}</td>
+                        <td>
+                          <span className="status-badge">未照合</span>
                         </td>
                       </tr>
                     ))}
@@ -215,7 +130,7 @@ export default function FileUploadForm() {
           )}
         </div>
       )}
-    </form>
+    </>
   )
 }
 
