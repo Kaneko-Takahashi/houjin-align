@@ -7,7 +7,12 @@ import csv
 
 import io
 
-from ..schemas.corporate import CorporateCheckInput, CorporateCheckResult
+from ..schemas.corporate import (
+    CorporateCheckInput,
+    CorporateCheckResult,
+    BulkLookupRequest,
+    BulkLookupResponse,
+)
 from ..services.corporate_lookup import CorporateLookupService
 from ..core.config import settings
 
@@ -90,7 +95,12 @@ async def upload_corporate_file(file: UploadFile = File(...)):
 
 def get_corporate_lookup_service() -> CorporateLookupService:
     """CorporateLookupService の依存性注入用関数"""
-    return CorporateLookupService(app_id=settings.houjin_app_id)
+    return CorporateLookupService(
+        app_id=settings.houjin_app_id,
+        request_interval=settings.houjin_api_request_interval,
+        max_retries=settings.houjin_api_max_retries,
+        retry_delay=settings.houjin_api_retry_delay,
+    )
 
 
 @router.post("/lookup", response_model=CorporateCheckResult)
@@ -99,6 +109,37 @@ def lookup_corporate(
     service: CorporateLookupService = Depends(get_corporate_lookup_service),
 ) -> CorporateCheckResult:
     """
-    単一レコードの「法人番号照合」用エンドポイント（Step B ではダミー動作）。
+    単一レコードの「法人番号照合」用エンドポイント。
     """
     return service.lookup_by_number(payload)
+
+
+@router.post("/bulk-lookup", response_model=BulkLookupResponse)
+def bulk_lookup_corporates(
+    request: BulkLookupRequest,
+    service: CorporateLookupService = Depends(get_corporate_lookup_service),
+) -> BulkLookupResponse:
+    """
+    複数レコードの一括照合エンドポイント。
+    レート制限対策が実装されており、大量のレコードを安全に処理できます。
+    """
+    if not request.records:
+        raise HTTPException(status_code=400, detail="レコードが空です。")
+
+    if len(request.records) > 10000:
+        raise HTTPException(
+            status_code=400,
+            detail="一度に処理できるレコード数は10,000件までです。",
+        )
+
+    results = service.bulk_lookup(request.records)
+
+    success_count = sum(1 for r in results if r.status != "NOT_FOUND")
+    error_count = len([r for r in results if r.status == "NOT_FOUND"])
+
+    return BulkLookupResponse(
+        results=results,
+        total_count=len(results),
+        success_count=success_count,
+        error_count=error_count,
+    )

@@ -1,6 +1,6 @@
 # api/app/schemas/corporate.py
 
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 
@@ -28,4 +28,19 @@ class CorporateCheckResult(BaseModel):
     matched_address: Optional[str] = None
     status: str  # "OK" / "NOT_FOUND" / "NEED_CHECK" など
     raw_response: Optional[str] = None  # 将来 CSV 生データや XML を入れる用（今は None 固定でも可）
+
+
+class BulkLookupRequest(BaseModel):
+    """一括照合リクエスト"""
+
+    records: List[CorporateCheckInput]
+
+
+class BulkLookupResponse(BaseModel):
+    """一括照合レスポンス"""
+
+    results: List[CorporateCheckResult]
+    total_count: int
+    success_count: int
+    error_count: int
 

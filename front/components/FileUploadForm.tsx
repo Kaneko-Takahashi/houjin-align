@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { uploadCorporateFile, lookupCorporate, type UploadResponse, type CorporateRecord, type CorporateLookupResult } from '@/lib/apiClient'
+import { uploadCorporateFile, bulkLookupCorporate, type UploadResponse, type CorporateRecord, type CorporateLookupResult } from '@/lib/apiClient'
 
 // 照合ステータスの型定義
 export type CheckStatus = 'UNCHECKED' | 'CHECKING' | 'OK' | 'NOT_FOUND' | 'NEED_CHECK' | 'ERROR'
@@ -96,7 +96,7 @@ export default function FileUploadForm() {
     }
   }
 
-  // 一括照合処理
+  // 一括照合処理（バックエンドAPIを使用）
   const handleBulkLookup = async () => {
     if (recordsWithStatus.length === 0) {
       return
@@ -110,36 +110,45 @@ export default function FileUploadForm() {
       prev.map(record => ({ ...record, status: 'CHECKING' as CheckStatus }))
     )
 
-    // 各レコードについて順に照合処理を実行
-    const updatedRecords: RecordWithStatus[] = [...recordsWithStatus]
-    
-    for (let i = 0; i < updatedRecords.length; i++) {
-      const record = updatedRecords[i]
-      
-      try {
-        const lookupResult: CorporateLookupResult = await lookupCorporate({
+    try {
+      // バックエンドAPIに一括照合リクエストを送信
+      const bulkRequest = {
+        records: recordsWithStatus.map(record => ({
           corporate_number: record.corp_number,
           name: record.company_name,
-        })
+        })),
+      }
 
-        // 照合結果に基づいてステータスを更新
-        updatedRecords[i] = {
-          ...record,
-          status: lookupResult.status as CheckStatus,
+      const bulkResponse = await bulkLookupCorporate(bulkRequest)
+
+      // 照合結果をレコードに反映
+      const updatedRecords: RecordWithStatus[] = recordsWithStatus.map((record, index) => {
+        const lookupResult = bulkResponse.results[index]
+        if (lookupResult) {
+          return {
+            ...record,
+            status: lookupResult.status as CheckStatus,
+          }
         }
-      } catch (err) {
-        // APIエラー時は該当レコードのみ「エラー」ステータスに
-        updatedRecords[i] = {
+        return {
           ...record,
           status: 'ERROR' as CheckStatus,
         }
-      }
+      })
 
-      // UIを更新（リアルタイムで進捗を表示）
-      setRecordsWithStatus([...updatedRecords])
+      setRecordsWithStatus(updatedRecords)
+
+      // 結果サマリーを表示
+      console.log(`照合完了: 総件数 ${bulkResponse.total_count}件, 成功 ${bulkResponse.success_count}件, エラー ${bulkResponse.error_count}件`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '一括照合中にエラーが発生しました')
+      // エラー時は全レコードをエラーステータスに
+      setRecordsWithStatus(prev => 
+        prev.map(record => ({ ...record, status: 'ERROR' as CheckStatus }))
+      )
+    } finally {
+      setIsChecking(false)
     }
-
-    setIsChecking(false)
   }
 
   return (
