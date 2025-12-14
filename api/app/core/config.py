@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # 環境変数 HOUJIN_API_RETRY_DELAY から読み込む（デフォルト: 2.0秒）
     houjin_api_retry_delay: float = 2.0
 
+    # CORS設定: 許可するオリジン（カンマ区切り）
+    # 環境変数 ALLOWED_ORIGINS から読み込む（デフォルト: http://localhost:3000）
+    allowed_origins: str = "http://localhost:3000"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
