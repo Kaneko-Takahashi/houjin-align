@@ -64,10 +64,18 @@ class CorporateLookupService:
             "type": "12",  # CSV形式
         }
 
+        # デバッグ用: 実際のリクエストURLをログに出力
+        request_url = f"{url}?id={self.app_id}&number={corporate_number}&type=12"
+        logger.info(f"APIリクエスト: {request_url}")
+
         for attempt in range(self.max_retries):
             try:
                 with httpx.Client(timeout=30.0) as client:
                     response = client.get(url, params=params)
+                    
+                    # デバッグ用: レスポンスステータスと内容をログに出力
+                    logger.debug(f"APIレスポンス (ステータス: {response.status_code}): {response.text[:500]}")
+                    
                     response.raise_for_status()
                     
                     # CSV形式のレスポンスをパース
@@ -86,15 +94,22 @@ class CorporateLookupService:
                     return None
                     
             except httpx.HTTPStatusError as e:
-                if e.response.status_code == 429:  # Too Many Requests
+                # デバッグ用: 404エラーの詳細をログに出力
+                if e.response.status_code == 404:
+                    logger.error(f"404エラー: リクエストURL={request_url}, レスポンス={e.response.text[:500]}")
+                    # レスポンスの内容を確認して、エンドポイントエラーか法人番号未登録かを区別
+                    if "Not Found" in e.response.text or "not found" in e.response.text.lower():
+                        logger.error("エンドポイントが見つかりません。URLまたはパラメータを確認してください。")
+                    else:
+                        logger.info("法人番号が見つかりませんでした。")
+                    return None
+                elif e.response.status_code == 429:  # Too Many Requests
                     logger.warning(f"レート制限に達しました。{self.retry_delay * (attempt + 1)}秒待機します。")
                     time.sleep(self.retry_delay * (attempt + 1))
                     continue
-                elif e.response.status_code == 404:
-                    # 法人番号が見つからない
-                    return None
                 else:
                     logger.error(f"API呼び出しエラー (ステータス: {e.response.status_code}): {e}")
+                    logger.error(f"レスポンス内容: {e.response.text[:500]}")
                     if attempt < self.max_retries - 1:
                         time.sleep(self.retry_delay * (attempt + 1))
                         continue

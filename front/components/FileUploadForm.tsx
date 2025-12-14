@@ -9,6 +9,8 @@ export type CheckStatus = 'UNCHECKED' | 'CHECKING' | 'OK' | 'NOT_FOUND' | 'NEED_
 // ステータス付きレコードの型
 type RecordWithStatus = CorporateRecord & {
   status: CheckStatus
+  matched_name?: string | null  // 国税庁の正式名称（照合済みの場合）
+  matched_address?: string | null  // 国税庁の正式住所（照合済みの場合）
 }
 
 export default function FileUploadForm() {
@@ -96,6 +98,60 @@ export default function FileUploadForm() {
     }
   }
 
+  // CSVダウンロード処理
+  const handleDownloadCSV = () => {
+    if (recordsWithStatus.length === 0) {
+      setError('ダウンロードするデータがありません')
+      return
+    }
+
+    // CSVヘッダー
+    const headers = [
+      '行番号',
+      '法人番号',
+      '名称（入力）',
+      '住所（入力）',
+      '照合ステータス',
+      '名称（国税庁）',
+      '住所（国税庁）',
+    ]
+
+    // CSVデータ行を生成
+    const csvRows = [
+      headers.join(','), // ヘッダー行
+      ...recordsWithStatus.map((record, index) => {
+        const row = [
+          (index + 1).toString(),
+          `"${record.corp_number || ''}"`,
+          `"${(record.company_name || '').replace(/"/g, '""')}"`,
+          `"${(record.address || '').replace(/"/g, '""')}"`,
+          `"${getStatusLabel(record.status)}"`,
+          `"${(record.matched_name || '').replace(/"/g, '""')}"`,
+          `"${(record.matched_address || '').replace(/"/g, '""')}"`,
+        ]
+        return row.join(',')
+      }),
+    ]
+
+    // CSV文字列を生成
+    const csvContent = csvRows.join('\n')
+
+    // BOM付きUTF-8でエンコード（Excelで正しく開くため）
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
+
+    // ダウンロードリンクを作成してクリック
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+    link.download = `照合結果_${timestamp}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   // 一括照合処理（バックエンドAPIを使用）
   const handleBulkLookup = async () => {
     if (recordsWithStatus.length === 0) {
@@ -121,18 +177,22 @@ export default function FileUploadForm() {
 
       const bulkResponse = await bulkLookupCorporate(bulkRequest)
 
-      // 照合結果をレコードに反映
+      // 照合結果をレコードに反映（正式情報も含める）
       const updatedRecords: RecordWithStatus[] = recordsWithStatus.map((record, index) => {
         const lookupResult = bulkResponse.results[index]
         if (lookupResult) {
           return {
             ...record,
             status: lookupResult.status as CheckStatus,
+            matched_name: lookupResult.matched_name,
+            matched_address: lookupResult.matched_address,
           }
         }
         return {
           ...record,
           status: 'ERROR' as CheckStatus,
+          matched_name: null,
+          matched_address: null,
         }
       })
 
@@ -144,7 +204,12 @@ export default function FileUploadForm() {
       setError(err instanceof Error ? err.message : '一括照合中にエラーが発生しました')
       // エラー時は全レコードをエラーステータスに
       setRecordsWithStatus(prev => 
-        prev.map(record => ({ ...record, status: 'ERROR' as CheckStatus }))
+        prev.map(record => ({ 
+          ...record, 
+          status: 'ERROR' as CheckStatus,
+          matched_name: null,
+          matched_address: null,
+        }))
       )
     } finally {
       setIsChecking(false)
@@ -214,16 +279,26 @@ export default function FileUploadForm() {
                 <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#333' }}>
                   レコード一覧
                 </h4>
-                <button
-                  type="button"
-                  onClick={handleBulkLookup}
-                  disabled={recordsWithStatus.length === 0 || isChecking}
-                  className="upload-button"
-                  style={{ marginLeft: '16px' }}
-                >
-                  {isChecking && <span className="button-spinner"></span>}
-                  {isChecking ? '照合中…' : '法人番号を一括照合'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={handleBulkLookup}
+                    disabled={recordsWithStatus.length === 0 || isChecking}
+                    className="upload-button"
+                  >
+                    {isChecking && <span className="button-spinner"></span>}
+                    {isChecking ? '照合中…' : '法人番号を一括照合'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadCSV}
+                    disabled={recordsWithStatus.length === 0}
+                    className="upload-button"
+                    style={{ backgroundColor: '#28a745', borderColor: '#28a745' }}
+                  >
+                    CSVダウンロード
+                  </button>
+                </div>
               </div>
               <div className="table-wrapper">
                 <table className="table">
