@@ -105,29 +105,29 @@ export default function FileUploadForm() {
       return
     }
 
-    // CSVヘッダー
+    // CSVヘッダー（F列とG列を削除）
     const headers = [
       '行番号',
       '法人番号',
       '名称（入力）',
       '住所（入力）',
       '照合ステータス',
-      '名称（国税庁）',
-      '住所（国税庁）',
     ]
 
     // CSVデータ行を生成
     const csvRows = [
       headers.join(','), // ヘッダー行
       ...recordsWithStatus.map((record, index) => {
+        // 法人番号を文字列として扱うため、先頭にタブ文字を付ける（Excelで科学記数法にならないように）
+        const corporateNumber = record.corp_number || ''
+        const corporateNumberFormatted = corporateNumber ? `"\t${corporateNumber}"` : '""'
+        
         const row = [
           (index + 1).toString(),
-          `"${record.corp_number || ''}"`,
+          corporateNumberFormatted,
           `"${(record.company_name || '').replace(/"/g, '""')}"`,
           `"${(record.address || '').replace(/"/g, '""')}"`,
           `"${getStatusLabel(record.status)}"`,
-          `"${(record.matched_name || '').replace(/"/g, '""')}"`,
-          `"${(record.matched_address || '').replace(/"/g, '""')}"`,
         ]
         return row.join(',')
       }),
@@ -144,7 +144,22 @@ export default function FileUploadForm() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+    // ファイル名: 照合結果_YYYY-MM-DD_HH-MM-SS.csv
+    // 日付後の数字（HH-MM-SS）は時刻（時-分-秒）を表します
+    // 現在時刻を正確に取得（ローカル時刻）
+    const now = new Date()
+    // ローカル時刻を明示的に取得
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    const seconds = String(now.getSeconds()).padStart(2, '0')
+    
+    // デバッグ用: コンソールに現在時刻を出力（確認用）
+    console.log('ダウンロード時刻:', `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`)
+    
+    const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
     link.download = `照合結果_${timestamp}.csv`
     document.body.appendChild(link)
     link.click()
