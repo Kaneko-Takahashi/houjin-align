@@ -1,11 +1,12 @@
 /**
  * API 呼び出し用の簡易クライアント
  * 
- * ベースURLは一旦 http://localhost:8000 としている。
- * 将来は環境変数や設定ファイルから取得する予定。
+ * ベースURLは環境変数から取得します。
+ * 開発環境: http://localhost:8000
+ * 本番環境: RenderでデプロイしたバックエンドのURL
  */
 
-const API_BASE_URL = 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
 
 export interface CorporateRecord {
   client_id: string

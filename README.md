@@ -186,6 +186,26 @@ houjin-align/
 - `POST /checks/bulk-lookup` - 一括照合
 - `GET /health` - ヘルスチェック
 
+## デプロイ
+
+本アプリケーションは、Vercel（フロントエンド）と Render（バックエンド）に無料でデプロイできます。
+
+詳細な手順は [DEPLOY.md](DEPLOY.md) を参照してください。
+
+### クイックスタート
+
+1. **バックエンド（Render）をデプロイ**
+   - Renderアカウントを作成
+   - GitHubリポジトリを接続
+   - Root Directory: `api` を指定
+   - 環境変数を設定
+
+2. **フロントエンド（Vercel）をデプロイ**
+   - Vercelアカウントを作成
+   - GitHubリポジトリを接続
+   - Root Directory: `front` を指定
+   - 環境変数 `NEXT_PUBLIC_API_BASE_URL` にRenderのURLを設定
+
 ## 今後の実装予定
 
 - [ ] フィルタリング機能（要確認・不一致のみを絞り込み）

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: houjin-align-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: HOUJIN_APP_ID
+        sync: false  # 手動で設定
+      - key: HOUJIN_API_REQUEST_INTERVAL
+        value: 1.0
+      - key: HOUJIN_API_MAX_RETRIES
+        value: 3
+      - key: HOUJIN_API_RETRY_DELAY
+        value: 2.0
+      - key: ALLOWED_ORIGINS
+        sync: false  # VercelのURLを手動で設定
