@@ -5,8 +5,9 @@ from typing import Optional
 # Pydantic v2対応: BaseSettingsはpydantic-settingsパッケージに移動
 try:
     from pydantic_settings import BaseSettings
+    from pydantic import Field
 except ImportError:
-    from pydantic import BaseSettings
+    from pydantic import BaseSettings, Field
 
 
 class Settings(BaseSettings):
@@ -30,7 +31,10 @@ class Settings(BaseSettings):
 
     # CORS設定: 許可するオリジン（カンマ区切り）
     # 環境変数 ALLOWED_ORIGINS から読み込む（デフォルト: http://localhost:3000）
-    allowed_origins: str = "http://localhost:3000"
+    allowed_origins: str = Field(
+        default="http://localhost:3000",
+        alias="ALLOWED_ORIGINS",
+    )
 
     class Config:
         env_file = ".env"
