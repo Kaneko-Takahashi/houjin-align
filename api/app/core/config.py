@@ -2,7 +2,11 @@
 
 from typing import Optional
 
-from pydantic import BaseSettings
+# Pydantic v2対応: BaseSettingsはpydantic-settingsパッケージに移動
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
